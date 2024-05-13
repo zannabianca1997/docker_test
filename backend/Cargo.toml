@@ -1,0 +1,22 @@
+[package]
+name = "backend"
+version = "0.1.0"
+edition = "2021"
+
+default-run = "server"
+
+[dependencies]
+axum = { version = "0.7.5", features = ["macros"] }
+chrono = { version = "0.4.38", features = ["clock", "serde"] }
+clap = { version = "4.5.4", features = ["derive"] }
+elsa = "1.10.0"
+serde = { version = "1.0.201", features = ["derive"] }
+thiserror = "1.0.60"
+tokio = { version = "1.37.0", features = [
+    "macros",
+    "rt-multi-thread",
+    "signal",
+] }
+tower-http = { version = "0.5.2", features = ["trace", "timeout"] }
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+ts-rs = { version = "8.1.0", features = ["chrono", "chrono-impl"] }
