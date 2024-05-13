@@ -1,4 +1,4 @@
-use std::{net::SocketAddr, time::Duration};
+use std::{net::Ipv4Addr, time::Duration};
 
 use clap::Parser;
 use tokio::signal;
@@ -8,9 +8,9 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Debug, Parser)]
 pub struct Config {
-    #[clap(default_value = "0.0.0.0:3000")]
+    #[clap(long, short, default_value_t = 3000)]
     /// The server will listen to this address
-    addr: SocketAddr,
+    port: u16,
 }
 
 async fn shutdown_signal() {
@@ -65,7 +65,7 @@ fn main() -> std::io::Result<()> {
         .unwrap()
         .block_on(async {
             // run our app with hyper
-            let listener = tokio::net::TcpListener::bind(args.addr)
+            let listener = tokio::net::TcpListener::bind((Ipv4Addr::new(0, 0, 0, 0), args.port))
                 .await
                 .expect("failed to bind to address");
 
