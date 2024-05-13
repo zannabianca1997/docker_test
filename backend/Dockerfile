@@ -1,14 +1,12 @@
 # syntax=docker/dockerfile:1
 
 ARG RUST_VERSION=1.78.0
-ARG APP_NAME=server
 ARG PORT=3000
 
 ################################################################################
 # Create a stage for building the application.
 
 FROM rust:${RUST_VERSION}-alpine AS build
-ARG APP_NAME
 WORKDIR /app
 
 # Install host build dependencies.
@@ -28,8 +26,8 @@ RUN --mount=type=bind,source=src,target=src \
     --mount=type=cache,target=/app/target/ \
     --mount=type=cache,target=/usr/local/cargo/git/db \
     --mount=type=cache,target=/usr/local/cargo/registry/ \
-    cargo build --locked --release && \
-    cp ./target/release/$APP_NAME /bin/server
+    cargo build --locked --release --bin server && \
+    cp ./target/release/server /bin/server
 
 ################################################################################
 # Create a new stage for running the application that contains the minimal
