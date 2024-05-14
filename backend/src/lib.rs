@@ -1,4 +1,4 @@
-use std::{fmt::Debug, path::Path, sync::Arc};
+use std::{fmt::Debug, sync::Arc};
 
 use axum::{
     extract::State,
@@ -8,7 +8,6 @@ use axum::{
 use chrono::{DateTime, Local, Utc};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{OwnedRwLockReadGuard, RwLock};
-use ts_rs::{ExportError, TS};
 
 #[derive(Clone)]
 pub struct ServerStatus {
@@ -32,15 +31,23 @@ impl ServerStatus {
     }
 }
 
-#[derive(Debug, Clone, Serialize, TS)]
+#[derive(Debug, Clone, Serialize)]
+#[cfg_attr(feature = "bindgen", derive(schemars::JsonSchema))]
+#[serde(deny_unknown_fields)]
+/// A stored message
 pub struct StoredMessage {
     /// The time this message was received by the server
     time: DateTime<Utc>,
-    #[serde(flatten)]
-    msg: Message,
+    /// The user that posted this message
+    user: String,
+    /// The message posted
+    content: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "bindgen", derive(schemars::JsonSchema))]
+#[serde(deny_unknown_fields)]
+/// A message
 pub struct Message {
     /// The user that posted this message
     user: String,
@@ -58,8 +65,9 @@ struct BoardLock {
     messages: OwnedRwLockReadGuard<Vec<StoredMessage>>,
 }
 
-#[derive(Serialize, TS)]
-#[ts(rename = "Board")]
+#[derive(Serialize)]
+#[cfg_attr(feature = "bindgen", derive(schemars::JsonSchema))]
+#[serde(rename = "Board", deny_unknown_fields)]
 struct BorrowedBoardLock<'a> {
     /// The time the board was locked
     time: DateTime<Utc>,
@@ -83,14 +91,37 @@ impl Serialize for BoardLock {
     }
 }
 
+#[cfg(feature = "bindgen")]
+impl schemars::JsonSchema for BoardLock {
+    fn schema_name() -> String {
+        BorrowedBoardLock::schema_name()
+    }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        BorrowedBoardLock::json_schema(gen)
+    }
+
+    fn is_referenceable() -> bool {
+        BorrowedBoardLock::is_referenceable()
+    }
+
+    fn schema_id() -> std::borrow::Cow<'static, str> {
+        BorrowedBoardLock::schema_id()
+    }
+}
+
 async fn get_board(State(state): State<ServerStatus>) -> Json<BoardLock> {
     Json(state.get_board().await)
 }
 
-async fn post_message(State(state): State<ServerStatus>, Json(msg): Json<Message>) -> () {
+async fn post_message(
+    State(state): State<ServerStatus>,
+    Json(Message { user, content }): Json<Message>,
+) -> () {
     state.messages.write().await.push(StoredMessage {
         time: Local::now().to_utc(),
-        msg,
+        user,
+        content,
     })
 }
 
@@ -101,20 +132,12 @@ pub fn build() -> Router {
         .with_state(ServerStatus::new())
 }
 
-pub fn bindgen(path: impl AsRef<Path>) -> Result<(), Vec<ExportError>> {
-    [
-        BorrowedBoardLock::export_all_to(&path),
-        Message::export_all_to(&path),
-        StoredMessage::export_all_to(&path),
-    ]
-    .into_iter()
-    .fold(Ok(()), |acc, res| match (acc, res) {
-        (Ok(()), Ok(())) => Ok(()),
-        (Ok(()), Err(err)) => Err(vec![err]),
-        (Err(errs), Ok(())) => Err(errs),
-        (Err(mut errs), Err(err)) => {
-            errs.push(err);
-            Err(errs)
-        }
-    })
+#[cfg(feature = "bindgen")]
+pub fn bindgen() {
+    use std::io::stdout;
+
+    use schemars::schema_for;
+    use serde_json::to_writer;
+
+    to_writer(stdout(), &schema_for!((BoardLock, Message))).expect("Cannot write json schema")
 }

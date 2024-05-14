@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 ARG RUST_VERSION=1.78.0
-ARG PORT=3000
+ARG PORT=4000
 
 ################################################################################
 # Create a stage for building the application.
