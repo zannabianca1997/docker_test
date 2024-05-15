@@ -183,6 +183,7 @@ dependencies = [
  "chrono",
  "clap",
  "elsa",
+ "http",
  "schemars",
  "serde",
  "serde_json",

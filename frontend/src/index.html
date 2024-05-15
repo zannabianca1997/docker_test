@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="UTF-8">
+<title>TestChat</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="style.css">
+
+<script src="script.js"></script>
+
+<body onload="update_messages()">
+    <div id="title_bar">
+        <div id="title">TestChat</div>
+        <div id="time"></div>
+    </div>
+
+    <table id="messages"></table>
+
+    <div id="input_bar">
+        <input type="text" id="user" value="anon" />
+        <input type="text" id="msg" />
+        <input type="button" value="Send" onclick="send_message()" id="send" />
+    </div>
+
+    <script>
+        initial_username();
+        window.setInterval(update_messages, 1000);
+    </script>
+</body>
+
+</html>

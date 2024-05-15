@@ -1,0 +1,74 @@
+#title_bar {
+    width: 100%;
+    display: flex;
+    height: fit-content;
+}
+
+#title_bar * {
+    background-color: cyan;
+}
+
+#title_bar #title {
+    flex-basis: 0;
+    flex-grow: 1;
+}
+
+#title_bar #time {
+    flex-basis: 0;
+    flex-grow: 1;
+    text-align: right;
+}
+
+#messages {
+    width: 100%;
+}
+
+#messages td.user {
+    width: 10%;
+}
+
+#messages td.content {
+    border-radius: 25px;
+    padding: 8px;
+}
+
+#messages tr.own_message td.content {
+    background: #73AD21;
+}
+
+#messages tr.other_message td.content {
+    background: #3699b7;
+}
+
+#messages td.time {
+    text-align: right;
+    width: min-content;
+}
+
+#input_bar {
+    width: 100%;
+    display: flex;
+    height: fit-content;
+}
+
+#input_bar input {
+    border-radius: 25px;
+    padding: 8px;
+    margin: 2px;
+}
+
+#input_bar #user {
+    width: 10px;
+    flex-basis: 0;
+    flex-grow: 1;
+}
+
+#input_bar #send {
+    flex-basis: 0;
+    flex-grow: 1;
+}
+
+#input_bar #msg {
+    flex-basis: 0;
+    flex-grow: 8;
+}

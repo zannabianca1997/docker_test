@@ -1,9 +1,12 @@
 use std::{net::Ipv4Addr, time::Duration};
 
+use axum::http::Method;
 use clap::Parser;
+use http::header::CONTENT_TYPE;
 use tokio::signal;
-use tower_http::timeout::TimeoutLayer;
+use tower_http::cors::Any;
 use tower_http::trace::TraceLayer;
+use tower_http::{cors::CorsLayer, timeout::TimeoutLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Debug, Parser)]
@@ -56,6 +59,14 @@ fn main() -> std::io::Result<()> {
         // Graceful shutdown will wait for outstanding requests to complete. Add a timeout so
         // requests don't hang forever.
         TimeoutLayer::new(Duration::from_secs(10)),
+        // Accept CORS requests
+        CorsLayer::new()
+            // allow `GET` and `POST` when accessing the resource
+            .allow_methods([Method::GET, Method::POST])
+            // allow only JSON data
+            .allow_headers([CONTENT_TYPE])
+            // allow requests from any origin
+            .allow_origin(Any),
     ));
 
     // create the tokio runtime
