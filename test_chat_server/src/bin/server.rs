@@ -54,7 +54,7 @@ fn main() -> std::io::Result<()> {
         .init();
 
     // build our api
-    let app = backend::build().layer((
+    let app = test_chat_server::build().layer((
         TraceLayer::new_for_http(),
         // Graceful shutdown will wait for outstanding requests to complete. Add a timeout so
         // requests don't hang forever.
