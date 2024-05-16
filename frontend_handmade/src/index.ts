@@ -1,13 +1,13 @@
-function format_date(date) {
+function format_date(date: string): string {
     return new Date(Date.parse(date)).toLocaleTimeString()
 }
 
-function get_current_user() {
-    const user_input = document.getElementById("user");
+function get_current_user(): string {
+    const user_input = document.getElementById("user") as HTMLInputElement;
     return user_input.value;
 }
 
-function message_row(user, content, time, is_you) {
+function message_row(user: string, content: string, time: string, is_you: boolean): HTMLTableRowElement {
     const user_cell = document.createElement("td");
     user_cell.className = "user"
     user_cell.innerText = user;
@@ -31,7 +31,7 @@ function message_row(user, content, time, is_you) {
     return row;
 }
 
-function find_api_url() {
+function find_api_url(): URL {
     const url = new URL(document.URL);
     url.port = "4000";
     url.pathname = "/";
@@ -39,14 +39,14 @@ function find_api_url() {
 }
 
 function initial_username() {
-    const user = document.getElementById("user");
+    const user = document.getElementById("user") as HTMLInputElement;
     if (user.value === "anon") {
         const num = "anon" + Math.floor(Math.random() * 90000) + 10000;
         user.value = num;
     }
 }
 
-const APIURL = find_api_url();
+const APIURL: URL = find_api_url();
 
 async function update_messages() {
     const response = await fetch(APIURL);
@@ -57,19 +57,19 @@ async function update_messages() {
 
     const { time, messages } = await response.json();
 
-    const time_div = document.getElementById("time");
+    const time_div = document.getElementById("time") as HTMLDivElement;
     time_div.innerText = format_date(time);
 
     const current_user = get_current_user();
 
-    const table = document.getElementById("messages");
-    table.replaceChildren(...messages.map(({ user, content, time }) => {
+    const table = document.getElementById("messages") as HTMLTableElement;
+    table.replaceChildren(...messages.map(({ user, content, time }: { user: string, content: string, time: string }) => {
         return message_row(user, content, time, user == current_user)
     }));
 }
 
 async function send_message() {
-    const msg_input = document.getElementById("msg");
+    const msg_input = document.getElementById("msg") as HTMLInputElement;
     const msg = msg_input.value;
     msg_input.value = "";
 
