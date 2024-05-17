@@ -1,0 +1,129 @@
+.TestChat {
+    /* Widen the element to fill the page*/
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    right: 0px;
+    left: 0px;
+}
+
+.TestChat>.TopBar {
+    background-color: lightblue;
+
+    position: relative;
+    width: 100%;
+    height: 50px;
+}
+
+.TestChat>.TopBar>* {
+    position: absolute;
+    top: 50%;
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+
+.TestChat>.TopBar>.Title {
+    left: 0%;
+
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+.TestChat>.TopBar>.Time {
+    right: 0%;
+
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+.TestChat>.Messages {
+    background-color: azure;
+
+    position: relative;
+    width: 100%;
+    height: calc(100% - 100px);
+
+    overflow-y: scroll;
+    display: flow;
+}
+
+.TestChat>.Messages>.Message {
+    background-color: rgb(126, 150, 228);
+
+    border-radius: 10px;
+    margin: 3px;
+    padding: 10px;
+
+    display: block flow-root;
+
+    width: fit-content;
+    height: fit-content;
+
+    float: left;
+    clear: both;
+}
+
+.TestChat>.Messages>.Message.OwnMessage {
+    background-color: rgb(89, 223, 98);
+    float: right;
+}
+
+.TestChat>.Messages>.Message>.User {
+    float: left;
+    padding-right: 5px;
+    font-style: italic;
+}
+
+.TestChat>.Messages>.Message>.Time {
+    float: right;
+    padding-left: 5px;
+    font-style: italic;
+}
+
+.TestChat>.Messages>.Message>.Content {
+    width: 100%;
+    clear: both;
+}
+
+.TestChat>.InputBar {
+    background-color: lightblue;
+
+    position: relative;
+    width: 100%;
+    height: 50px;
+}
+
+.TestChat>.InputBar>* {
+    position: absolute;
+    top: 50%;
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+
+.TestChat>.InputBar>.UserInput {
+    left: 0%;
+    margin-left: 5px;
+
+    width: 80px;
+}
+
+.TestChat>.InputBar>.UserInput.WrongUser {
+    background-color: pink;
+    color: white;
+}
+
+.TestChat>.InputBar>.MsgInput {
+    left: 50%;
+    -ms-transform: translateY(-50%) translateX(-50%);
+    transform: translateY(-50%) translateX(-50%);
+
+
+    width: calc(100% - 200px);
+}
+
+.TestChat>.InputBar>.MsgSend {
+    right: 0%;
+    margin-right: 5px;
+
+    width: 80px;
+}
