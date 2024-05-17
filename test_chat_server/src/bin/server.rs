@@ -50,8 +50,14 @@ fn main() -> std::io::Result<()> {
     // Enable tracing.
     tracing_subscriber::registry()
         .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "backend=debug,tower_http=debug,axum=trace".into()),
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+                (if cfg!(debug_assertions) {
+                    "backend=debug,tower_http=debug,axum=trace"
+                } else {
+                    "backend=warn,tower_http=warn,axum=warn"
+                })
+                .into()
+            }),
         )
         .with(tracing_subscriber::fmt::layer().without_time())
         .init();
