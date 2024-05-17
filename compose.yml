@@ -1,12 +1,12 @@
 services:
+  backend:
+    build: ./test_chat_server
+    ports:
+      - "4000:3000"
+    command: --title ComposeChat
   frontend:
     build: ./test_chat_client
     ports:
       - "3000:3000"
     environment:
       - APIURL=http://82.57.58.47:4000/
-  backend:
-    build: ./test_chat_server
-    ports:
-      - "4000:3000"
-    command: --title ComposeChat
