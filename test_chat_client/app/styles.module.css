@@ -45,6 +45,8 @@
 
     overflow-y: scroll;
     display: flow;
+
+    overflow-anchor: none;
 }
 
 .TestChat>.Messages>.Message {
@@ -58,6 +60,16 @@
 
     width: fit-content;
     height: fit-content;
+
+    float: left;
+    clear: both;
+}
+
+.TestChat>.Messages>.ScrollAnchor {
+    overflow-anchor: auto;
+
+    width: 100%;
+    height: 1px;
 
     float: left;
     clear: both;

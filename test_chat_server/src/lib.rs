@@ -13,17 +13,20 @@ use tokio::sync::{OwnedRwLockReadGuard, RwLock};
 pub struct ServerStatus {
     messages: Arc<RwLock<Vec<StoredMessage>>>,
     started_at: DateTime<Utc>,
+    title: Arc<str>,
 }
 impl ServerStatus {
-    fn new() -> Self {
+    fn new(title: String) -> Self {
         Self {
             messages: Arc::new(RwLock::new(vec![])),
             started_at: chrono::Local::now().to_utc(),
+            title: title.into(),
         }
     }
 
     async fn get_board(&self) -> BoardLock {
         BoardLock {
+            title: self.title.clone(),
             time: Local::now().to_utc(),
             started_at: self.started_at,
             messages: self.messages.clone().read_owned().await,
@@ -57,6 +60,8 @@ pub struct Message {
 
 /// A locked state of the board, ready to be serialized
 struct BoardLock {
+    /// Title of the server
+    title: Arc<str>,
     /// The time the board was locked
     time: DateTime<Utc>,
     /// The time the server was started
@@ -69,6 +74,8 @@ struct BoardLock {
 #[cfg_attr(feature = "bindgen", derive(schemars::JsonSchema))]
 #[serde(rename = "Board", deny_unknown_fields)]
 struct BorrowedBoardLock<'a> {
+    /// Title of the server
+    title: &'a str,
     /// The time the board was locked
     time: DateTime<Utc>,
     /// The time the server was started
@@ -83,6 +90,7 @@ impl Serialize for BoardLock {
         S: serde::Serializer,
     {
         BorrowedBoardLock {
+            title: &self.title,
             time: self.time,
             started_at: self.started_at,
             messages: &self.messages,
@@ -125,11 +133,11 @@ async fn post_message(
     })
 }
 
-pub fn build() -> Router {
+pub fn build(title: String) -> Router {
     Router::new()
         .route("/", get(get_board))
         .route("/", post(post_message))
-        .with_state(ServerStatus::new())
+        .with_state(ServerStatus::new(title))
 }
 
 #[cfg(feature = "bindgen")]

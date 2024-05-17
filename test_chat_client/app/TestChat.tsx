@@ -1,5 +1,5 @@
 'use client'
-import { ChangeEvent, FormEvent, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import styles from './styles.module.css'
 import { Board, Message, StoredMessage } from './bindings';
 
@@ -33,6 +33,8 @@ export default function TestChat() {
     const [user, setUser] = useState<string>(start_user());
     // Last time got from the server
     const [time, setTime] = useState<Date | null>(null);
+    // Last time got from the server
+    const [title, setTitle] = useState<string>("");
     // Message received from the server
     const [messages, setMessages] = useState<StoredMessage[]>([]);
 
@@ -46,9 +48,10 @@ export default function TestChat() {
                 console.log(response)
             }
 
-            const { time, messages } = (await response.json() as Board);
+            const { title, time, messages } = (await response.json() as Board);
 
             setTime(new Date(Date.parse(time)));
+            setTitle(title);
             setMessages(messages);
         }
     }
@@ -78,10 +81,14 @@ export default function TestChat() {
     };
 
     // update the page every second
-    setTimeout(update_messages, 1000);
+    useEffect(() => {
+        const interval = setInterval(update_messages, 1000);
+
+        return () => clearInterval(interval);
+    }, [])
 
     return <div className={styles.TestChat}>
-        <TopBar title="TestChat" time={time} />
+        <TopBar title={title} time={time} />
         <Messages user={user} messages={messages} />
         <InputBar user={user} setUser={setUser} sendMessage={sendMessage} />
     </div>;

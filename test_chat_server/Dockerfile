@@ -1,7 +1,6 @@
 # syntax=docker/dockerfile:1
 
 ARG RUST_VERSION=1.78.0
-ARG PORT=4000
 
 ################################################################################
 # Create a stage for building the application.
@@ -37,9 +36,6 @@ RUN --mount=type=bind,source=src,target=src \
 
 FROM alpine:3.18 AS final
 
-# Remember on which port it must serve
-ARG PORT
-ENV PORT=${PORT}
 
 # Create a non-privileged user that the app will run under.
 ARG UID=10001
@@ -57,7 +53,7 @@ USER appuser
 COPY --from=build /bin/server /bin/
 
 # Expose the port that the application listens on.
-EXPOSE ${PORT}
+EXPOSE 3000
 
-# What the container should run when it is started.
-CMD /bin/server --port ${PORT}
+ENTRYPOINT [ "/bin/server", "--port", "3000" ]
+
