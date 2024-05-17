@@ -53,6 +53,7 @@
     background-color: rgb(126, 150, 228);
 
     border-radius: 10px;
+    border-top-left-radius: 0px;
     margin: 3px;
     padding: 10px;
 
@@ -65,6 +66,14 @@
     clear: both;
 }
 
+.TestChat>.Messages>.Message.OwnMessage {
+    background-color: rgb(89, 223, 98);
+    float: right;
+
+    border-top-left-radius: 10px;
+    border-top-right-radius: 0px;
+}
+
 .TestChat>.Messages>.ScrollAnchor {
     overflow-anchor: auto;
 
@@ -73,11 +82,6 @@
 
     float: left;
     clear: both;
-}
-
-.TestChat>.Messages>.Message.OwnMessage {
-    background-color: rgb(89, 223, 98);
-    float: right;
 }
 
 .TestChat>.Messages>.Message>.User {
@@ -110,6 +114,12 @@
     top: 50%;
     -ms-transform: translateY(-50%);
     transform: translateY(-50%);
+
+    height: 30px;
+    border: 1px solid black;
+    border-radius: 5px;
+
+    font-size: 15px;
 }
 
 .TestChat>.InputBar>.UserInput {
@@ -129,6 +139,7 @@
     -ms-transform: translateY(-50%) translateX(-50%);
     transform: translateY(-50%) translateX(-50%);
 
+    resize: none;
 
     width: calc(100% - 200px);
 }

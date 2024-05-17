@@ -2,6 +2,8 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import styles from './styles.module.css'
 import { Board, Message, StoredMessage } from './bindings';
+import { env } from 'process';
+import { GetServerSideProps, InferGetServerSidePropsType } from 'next';
 
 function start_user(): string {
     let result = 'anon_';
@@ -17,18 +19,7 @@ function is_valid_user(user: string): boolean {
     return user.trim() === "";
 }
 
-function find_api_url(): URL | null {
-    if (typeof document !== 'undefined') {
-        const url = new URL(document.URL);
-        url.port = "4000";
-        url.pathname = "/";
-        return url;
-    } else {
-        return null;
-    }
-}
-
-export default function TestChat() {
+export default function TestChat({ APIURL }: { APIURL: string }) {
     // The last valid user
     const [user, setUser] = useState<string>(start_user());
     // Last time got from the server
@@ -38,46 +29,39 @@ export default function TestChat() {
     // Message received from the server
     const [messages, setMessages] = useState<StoredMessage[]>([]);
 
-
     const update_messages = async () => {
-        const APIURL = find_api_url();
-        if (APIURL) {
-            const response = await fetch(APIURL);
+        const response = await fetch(APIURL);
 
-            if (!response.ok) {
-                console.log(response)
-            }
-
-            const { title, time, messages } = (await response.json() as Board);
-
-            setTime(new Date(Date.parse(time)));
-            setTitle(title);
-            setMessages(messages);
+        if (!response.ok) {
+            console.log(response)
         }
+
+        const { title, time, messages } = (await response.json() as Board);
+
+        setTime(new Date(Date.parse(time)));
+        setTitle(title);
+        setMessages(messages);
     }
 
     const sendMessage = async (content: string) => {
-        const APIURL = find_api_url();
-        if (APIURL) {
-            const message: Message = { user, content };
+        const message: Message = { user, content };
 
-            const response = await fetch(APIURL, {
-                mode: 'cors',
-                method: 'post',
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(message)
-            });
+        const response = await fetch(APIURL, {
+            mode: 'cors',
+            method: 'post',
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(message)
+        });
 
-            if (!response.ok) {
-                // ups. Logging for now
-                console.log(response)
-            }
-
-            // update the message board instantly
-            await update_messages()
+        if (!response.ok) {
+            // ups. Logging for now
+            console.log(response)
         }
+
+        // update the message board instantly
+        await update_messages()
     };
 
     // update the page every second
@@ -111,7 +95,7 @@ function MessageEl({ message: { user, content, time }, own }: { message: StoredM
     return <div className={styles.Message + (own ? (" " + styles.OwnMessage) : "")}>
         <div className={styles.User}>{user}</div>
         <div className={styles.Time}>{new Date(Date.parse(time)).toLocaleTimeString()}</div>
-        <div className={styles.Content}>{content}</div>
+        <div className={styles.Content}>{content.split('\n').map(str => <>{str}<br /></>)}</div>
     </div>
 }
 
@@ -134,10 +118,10 @@ function InputBar(
 
         // read the message and clear the input box
         const msg_input = document.getElementById('msg_input') as HTMLInputElement;
-        const content = msg_input.value;
+        const content = msg_input.value.trim();
         msg_input.value = "";
 
-        if (content.trim() === "") {
+        if (content === "") {
             // Do not send empty messages
             return;
         }
@@ -161,7 +145,7 @@ function InputBar(
         <input id='user_input' type='text' placeholder='user' className={
             styles.UserInput +
             ((!user_valid) ? (" " + styles.WrongUser) : "")} onChange={user_changed} value={user} />
-        <input id='msg_input' type='text' className={styles.MsgInput} />
+        <textarea id='msg_input' className={styles.MsgInput} />
         <input type='submit' value='Send' disabled={!user_valid} onClick={submit} className={styles.MsgSend} />
     </form>
 }
