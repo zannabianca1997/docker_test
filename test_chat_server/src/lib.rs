@@ -6,6 +6,7 @@ use axum::{
     Json, Router,
 };
 use chrono::{DateTime, Local, Utc};
+use http::StatusCode;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{OwnedRwLockReadGuard, RwLock};
 
@@ -125,12 +126,21 @@ async fn get_board(State(state): State<ServerStatus>) -> Json<BoardLock> {
 async fn post_message(
     State(state): State<ServerStatus>,
     Json(Message { user, content }): Json<Message>,
-) -> () {
-    state.messages.write().await.push(StoredMessage {
-        time: Local::now().to_utc(),
-        user,
-        content,
-    })
+) -> StatusCode {
+    if is_valid_user(&user) && !content.is_empty() {
+        state.messages.write().await.push(StoredMessage {
+            time: Local::now().to_utc(),
+            user,
+            content,
+        });
+        StatusCode::OK
+    } else {
+        StatusCode::BAD_REQUEST
+    }
+}
+
+fn is_valid_user(user: &str) -> bool {
+    !user.is_empty() && user.len() <= 32
 }
 
 pub fn build(title: String) -> Router {

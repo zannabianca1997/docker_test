@@ -16,7 +16,8 @@ function start_user(): string {
 }
 
 function is_valid_user(user: string): boolean {
-    return user.trim() === "";
+    const trimmed = user.trim()
+    return trimmed !== "" && trimmed.length <= 32;
 }
 
 export default function TestChat({ API_URL }: { API_URL: string }) {
@@ -134,9 +135,9 @@ function InputBar(
         setUser(user.trim())
 
         if (is_valid_user(user)) {
-            setUserValid(false);
-        } else {
             setUserValid(true);
+        } else {
+            setUserValid(false);
         }
     };
 
