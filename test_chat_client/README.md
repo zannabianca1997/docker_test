@@ -14,10 +14,10 @@ APIURL='...' node .next/standalone/server.js
 The project is ready to be containerized. Just run
 ```bash
 docker build . -t frontend
-docker run -p3000:3000 -eAPIURL='...' -it frontend
+docker run -p3000:3000 -eAPI_URL='...' -it frontend
 ```
 substituting the running server URL to the ellipsis
 You can customize the port:
 ```bash
-docker run -p${PORT}:3000 -eAPIURL='...' -it frontend
+docker run -p${PORT}:3000 -eAPI_URL='...' -it frontend
 ```

@@ -19,7 +19,7 @@ function is_valid_user(user: string): boolean {
     return user.trim() === "";
 }
 
-export default function TestChat({ APIURL }: { APIURL: string }) {
+export default function TestChat({ API_URL }: { API_URL: string }) {
     // The last valid user
     const [user, setUser] = useState<string>(start_user());
     // Last time got from the server
@@ -30,7 +30,7 @@ export default function TestChat({ APIURL }: { APIURL: string }) {
     const [messages, setMessages] = useState<StoredMessage[]>([]);
 
     const update_messages = async () => {
-        const response = await fetch(APIURL);
+        const response = await fetch(API_URL);
 
         if (!response.ok) {
             console.log(response)
@@ -46,7 +46,7 @@ export default function TestChat({ APIURL }: { APIURL: string }) {
     const sendMessage = async (content: string) => {
         const message: Message = { user, content };
 
-        const response = await fetch(APIURL, {
+        const response = await fetch(API_URL, {
             mode: 'cors',
             method: 'post',
             headers: {

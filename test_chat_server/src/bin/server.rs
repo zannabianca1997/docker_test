@@ -11,8 +11,11 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Debug, Parser)]
 pub struct Config {
-    #[clap(long, short, default_value_t = 3000)]
+    #[clap(long, short, default_value = "127.0.0.1")]
     /// The server will listen to this address
+    addr: Ipv4Addr,
+    #[clap(long, short, default_value_t = 3000)]
+    /// The server will listen to this port
     port: u16,
     #[clap(long, short, default_value = "TestChat")]
     /// The title of the server
@@ -45,7 +48,7 @@ async fn shutdown_signal() {
 
 fn main() -> std::io::Result<()> {
     // read configs
-    let Config { port, title } = Config::parse();
+    let Config { port, title, addr } = Config::parse();
 
     // Enable tracing.
     tracing_subscriber::registry()
@@ -85,7 +88,7 @@ fn main() -> std::io::Result<()> {
         .unwrap()
         .block_on(async {
             // run our app with hyper
-            let listener = tokio::net::TcpListener::bind((Ipv4Addr::new(0, 0, 0, 0), port))
+            let listener = tokio::net::TcpListener::bind((addr, port))
                 .await
                 .expect("failed to bind to address");
 
