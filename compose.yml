@@ -1,14 +1,37 @@
 services:
-  backend:
-    build: ./test_chat_server
-    ports:
-      - "${API_SOCKET}:3000"
-    command: --title ${TITLE}
   frontend:
     build: ./test_chat_client
+    restart: unless-stopped
     ports:
       - "${CLIENT_SOCKET}:3000"
     environment:
       - APIURL=${API_URL}
-    depends_on:
-      - backend
+  backend:
+    build: ./test_chat_server
+    restart: always
+    ports:
+      - "${API_SOCKET}:3000"
+    command: --title ${TITLE}
+  db:
+    build: ./db
+    restart: always
+    # set shared memory limit when using docker-compose
+    shm_size: 128mb
+
+    environment:
+      POSTGRES_PASSWORD: password
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - test_chat_pgdb:/var/lib/postgresql/data
+
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  test_chat_pgdb:
