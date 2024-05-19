@@ -5,24 +5,29 @@ services:
     ports:
       - "${CLIENT_SOCKET}:3000"
     environment:
-      - APIURL=${API_URL}
+      - API_URL=${API_URL}
+    networks:
+      - front_facing
   backend:
     build: ./test_chat_server
     restart: always
     ports:
       - "${API_SOCKET}:3000"
-    command: --title ${TITLE}
+    environment:
+      - DB_CONN_STRING=postgresql://postgres:password@db:5432/messages
+    networks:
+      - test_chat_dbnet
+    depends_on:
+      db:
+        condition: service_healthy
   db:
     build: ./db
     restart: always
-    # set shared memory limit when using docker-compose
+
     shm_size: 128mb
 
     environment:
       POSTGRES_PASSWORD: password
-
-    ports:
-      - "5432:5432"
 
     volumes:
       - test_chat_pgdb:/var/lib/postgresql/data
@@ -33,5 +38,13 @@ services:
       timeout: 5s
       retries: 10
 
+    networks:
+      - test_chat_dbnet
+
 volumes:
   test_chat_pgdb:
+
+
+networks:
+  test_chat_dbnet:
+  front_facing:

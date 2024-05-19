@@ -5,33 +5,65 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Local, NaiveDateTime, Utc};
 use http::StatusCode;
 use serde::{Deserialize, Serialize};
-use tokio::sync::{OwnedRwLockReadGuard, RwLock};
+use tokio::task::JoinHandle;
+use tokio_postgres::{connect, Client, NoTls, Statement};
 
-#[derive(Clone)]
 pub struct ServerStatus {
-    messages: Arc<RwLock<Vec<StoredMessage>>>,
     started_at: DateTime<Utc>,
-    title: Arc<str>,
+    title: String,
+
+    client: Client,
+    get_messages: Statement,
+    send_message: Statement,
 }
 impl ServerStatus {
-    fn new(title: String) -> Self {
-        Self {
-            messages: Arc::new(RwLock::new(vec![])),
+    async fn new(client: Client) -> Result<Arc<Self>, tokio_postgres::Error> {
+        // first, activating the database
+        // client.execute(r"\c messages", &[]).await?;
+
+        // fetching the title
+        let title = "TestTitle".to_string(); //TODO
+
+        // preparing the queries
+        let get_messages = client
+            .prepare("SELECT time, \"user\", content FROM messages;")
+            .await?;
+        let send_message = client
+            .prepare("INSERT INTO messages (time, \"user\", content) VALUES ($1, $2, $3);")
+            .await?;
+
+        Ok(Arc::new(Self {
             started_at: chrono::Local::now().to_utc(),
-            title: title.into(),
-        }
+
+            title,
+
+            client,
+            get_messages,
+            send_message,
+        }))
     }
 
-    async fn get_board(&self) -> BoardLock {
-        BoardLock {
+    async fn get_board(self: Arc<Self>) -> Result<Board, tokio_postgres::Error> {
+        let messages = self
+            .client
+            .query(&self.get_messages, &[])
+            .await?
+            .into_iter()
+            .map(|row| StoredMessage {
+                time: row.get::<_, NaiveDateTime>("time").and_utc(),
+                user: row.get("user"),
+                content: row.get("content"),
+            })
+            .collect();
+        Ok(Board {
             title: self.title.clone(),
             time: Local::now().to_utc(),
             started_at: self.started_at,
-            messages: self.messages.clone().read_owned().await,
-        }
+            messages,
+        })
     }
 }
 
@@ -59,83 +91,61 @@ pub struct Message {
     content: String,
 }
 
-/// A locked state of the board, ready to be serialized
-struct BoardLock {
-    /// Title of the server
-    title: Arc<str>,
-    /// The time the board was locked
-    time: DateTime<Utc>,
-    /// The time the server was started
-    started_at: DateTime<Utc>,
-    /// The messages at that time
-    messages: OwnedRwLockReadGuard<Vec<StoredMessage>>,
-}
-
-#[derive(Serialize)]
+#[derive(Debug, Clone, Serialize)]
 #[cfg_attr(feature = "bindgen", derive(schemars::JsonSchema))]
-#[serde(rename = "Board", deny_unknown_fields)]
-struct BorrowedBoardLock<'a> {
+#[serde(deny_unknown_fields)]
+/// A locked state of the board, ready to be serialized
+struct Board {
     /// Title of the server
-    title: &'a str,
+    title: String,
     /// The time the board was locked
     time: DateTime<Utc>,
     /// The time the server was started
     started_at: DateTime<Utc>,
     /// The messages at that time
-    messages: &'a [StoredMessage],
+    messages: Vec<StoredMessage>,
 }
 
-impl Serialize for BoardLock {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        BorrowedBoardLock {
-            title: &self.title,
-            time: self.time,
-            started_at: self.started_at,
-            messages: &self.messages,
+async fn get_board(State(state): State<Arc<ServerStatus>>) -> Result<Json<Board>, StatusCode> {
+    match state.get_board().await {
+        Ok(board) => Ok(Json(board)),
+        Err(err) => {
+            tracing::error!("Error in obtaining board: {err}");
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
         }
-        .serialize(serializer)
     }
-}
-
-#[cfg(feature = "bindgen")]
-impl schemars::JsonSchema for BoardLock {
-    fn schema_name() -> String {
-        BorrowedBoardLock::schema_name()
-    }
-
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        BorrowedBoardLock::json_schema(gen)
-    }
-
-    fn is_referenceable() -> bool {
-        BorrowedBoardLock::is_referenceable()
-    }
-
-    fn schema_id() -> std::borrow::Cow<'static, str> {
-        BorrowedBoardLock::schema_id()
-    }
-}
-
-async fn get_board(State(state): State<ServerStatus>) -> Json<BoardLock> {
-    Json(state.get_board().await)
 }
 
 async fn post_message(
-    State(state): State<ServerStatus>,
+    State(state): State<Arc<ServerStatus>>,
     Json(Message { user, content }): Json<Message>,
 ) -> StatusCode {
-    if is_valid_user(&user) && !content.is_empty() {
-        state.messages.write().await.push(StoredMessage {
-            time: Local::now().to_utc(),
-            user,
-            content,
-        });
-        StatusCode::OK
-    } else {
-        StatusCode::BAD_REQUEST
+    if !is_valid_user(&user) || content.is_empty() {
+        tracing::warn!("An invalid message reached the server");
+        return StatusCode::BAD_REQUEST;
+    }
+
+    let ServerStatus {
+        client,
+        send_message,
+        ..
+    } = &*state;
+
+    match client
+        .execute(send_message, &[&Utc::now().naive_utc(), &user, &content])
+        .await
+    {
+        Ok(1) => StatusCode::OK,
+        Ok(n) => {
+            tracing::error!(
+                "Message inserting query affected strange number of row: {n} instead of 1"
+            );
+            StatusCode::INTERNAL_SERVER_ERROR
+        }
+        Err(err) => {
+            tracing::error!("Error in obtaining board: {err}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        }
     }
 }
 
@@ -143,11 +153,22 @@ fn is_valid_user(user: &str) -> bool {
     !user.is_empty() && user.len() <= 32
 }
 
-pub fn build(title: String) -> Router {
-    Router::new()
+pub async fn build(database: &str) -> Result<(Router, JoinHandle<()>), tokio_postgres::Error> {
+    // obtain a connection to the database
+    let (client, connection) = connect(database, NoTls).await?;
+
+    let connection_closed = tokio::spawn(async {
+        if let Err(err) = connection.await {
+            tracing::error!("The connection closed with an error: {err}");
+        }
+    });
+
+    let router = Router::new()
         .route("/", get(get_board))
         .route("/", post(post_message))
-        .with_state(ServerStatus::new(title))
+        .with_state(ServerStatus::new(client).await?);
+
+    Ok((router, connection_closed))
 }
 
 #[cfg(feature = "bindgen")]
@@ -157,5 +178,5 @@ pub fn bindgen() {
     use schemars::schema_for;
     use serde_json::to_writer;
 
-    to_writer(stdout(), &schema_for!((BoardLock, Message))).expect("Cannot write json schema")
+    to_writer(stdout(), &schema_for!((Board, Message))).expect("Cannot write json schema")
 }

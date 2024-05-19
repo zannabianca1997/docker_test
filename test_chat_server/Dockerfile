@@ -55,5 +55,6 @@ COPY --from=build /bin/server /bin/
 # Expose the port that the application listens on.
 EXPOSE 3000
 
-ENTRYPOINT [ "/bin/server", "--port", "3000", "--addr", "0.0.0.0" ]
+ENTRYPOINT [ "/bin/server", "--addr", "0.0.0.0:3000" ]
+
 
