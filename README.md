@@ -9,11 +9,13 @@ Simply launch with `docker compose`.
 
 For a local test deploy:
 ```bash
-TITLE='...' docker compose up
+docker compose up
 ```
 
 For a public deploy:
 ```bash
-TITLE='...' PUBLIC_IP='...' docker compose --env-file .env.public up
+PUBLIC_IP='...' docker compose --env-file .env.public up
 ```
 Where `PUBLIC_IP` is assigned to the IP where your clients can reach the API. You can also set directly `API_URL` if you need to customize the port or protocol.
+
+You might have to fiddle with you docker setup to enable mounting `db` inside the database image

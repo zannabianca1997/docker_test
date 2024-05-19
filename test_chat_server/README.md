@@ -4,17 +4,9 @@ This is a server for the chatroom, written in `Rust` using `Axum`
 ## Running
 You can run it directly using
 ```bash
-cargo run
+cargo run --addr 127.0.0.1:3000 --database postgresql://user:password@addr/db
 ```
-If you want to change the title of the chat, or the port the server is listening on, use `cargo run --help` for info.
-
-### Running into a container
-The project is ready to be containerized. Just run
+or with 
 ```bash
-docker build . -t backend
-docker run -p4000:3000 -it backend
-```
-You can customize both the port and the title:
-```bash
-docker run -p${PORT}:3000 -it backend --title ${TITLE}
+DB_CONN_STRING=postgresql://user:password@addr/db cargo run --addr 127.0.0.1:3000
 ```
