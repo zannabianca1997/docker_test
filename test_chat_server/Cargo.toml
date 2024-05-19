@@ -3,32 +3,24 @@ name = "test_chat_server"
 version = "0.1.0"
 edition = "2021"
 
-default-run = "server"
-
-[features]
-bindgen = ["dep:schemars", "dep:serde_json"]
-
-[[bin]]
-name = "bindgen"
-required-features = ["bindgen"]
 
 [dependencies]
-axum = { version = "0.7.5", features = ["macros"] }
-chrono = { version = "0.4.38", features = ["clock", "serde"] }
-clap = { version = "4.5.4", features = ["derive"] }
-elsa = "1.10.0"
-serde = { version = "1.0.201", features = ["derive", "rc"] }
-thiserror = "1.0.60"
-tokio = { version = "1.37.0", features = [
-    "macros",
-    "rt-multi-thread",
-    "signal",
-] }
-tower-http = { version = "0.5.2", features = ["trace", "timeout", "cors"] }
-tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+# API types
+common_types = { path = "../common_types" }
 
-schemars = { version = "0.8.19", features = ["chrono"], optional = true }
-serde_json = { version = "1.0.117", optional = true }
+# Server stuff
+axum = { version = "0.7.5", features = ["macros"] }
+tower-http = { version = "0.5.2", features = ["trace", "timeout", "cors"] }
 http = "1.1.0"
 tokio-postgres = { version = "0.7.10", features = ["with-chrono-0_4"] }
+
+# logging
 tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+
+# miscellanea
+chrono = { version = "0.4.38", features = ["clock"] }
+clap = { version = "4.5.4", features = ["derive"] }
+serde = { version = "1.0.201" }
+thiserror = "1.0.60"
+tokio = { version = "1.37.0", features = ["rt-multi-thread", "signal"] }

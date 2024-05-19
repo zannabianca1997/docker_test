@@ -1,0 +1,3 @@
+[workspace]
+members = ["test_chat_server", "common_types"]
+resolver = "2"

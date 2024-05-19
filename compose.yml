@@ -1,6 +1,9 @@
 services:
   frontend:
-    build: ./test_chat_client
+    build:
+      context: .
+      target: frontend-final
+
     restart: unless-stopped
     ports:
       - "${CLIENT_SOCKET}:3000"
@@ -9,7 +12,10 @@ services:
     networks:
       - front_facing
   backend:
-    build: ./test_chat_server
+    build:
+      context: .
+      target: backend-final
+
     restart: always
     ports:
       - "${API_SOCKET}:3000"

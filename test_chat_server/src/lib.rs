@@ -1,4 +1,4 @@
-use std::{fmt::Debug, sync::Arc};
+use std::sync::Arc;
 
 use axum::{
     extract::State,
@@ -7,9 +7,10 @@ use axum::{
 };
 use chrono::{DateTime, Local, NaiveDateTime, Utc};
 use http::StatusCode;
-use serde::{Deserialize, Serialize};
 use tokio::task::JoinHandle;
 use tokio_postgres::{connect, Client, NoTls, Statement};
+
+use common_types::{Board, Message, StoredMessage};
 
 pub struct ServerStatus {
     started_at: DateTime<Utc>,
@@ -65,45 +66,6 @@ impl ServerStatus {
             messages,
         })
     }
-}
-
-#[derive(Debug, Clone, Serialize)]
-#[cfg_attr(feature = "bindgen", derive(schemars::JsonSchema))]
-#[serde(deny_unknown_fields)]
-/// A stored message
-pub struct StoredMessage {
-    /// The time this message was received by the server
-    time: DateTime<Utc>,
-    /// The user that posted this message
-    user: String,
-    /// The message posted
-    content: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "bindgen", derive(schemars::JsonSchema))]
-#[serde(deny_unknown_fields)]
-/// A message
-pub struct Message {
-    /// The user that posted this message
-    user: String,
-    /// The message posted
-    content: String,
-}
-
-#[derive(Debug, Clone, Serialize)]
-#[cfg_attr(feature = "bindgen", derive(schemars::JsonSchema))]
-#[serde(deny_unknown_fields)]
-/// A locked state of the board, ready to be serialized
-struct Board {
-    /// Title of the server
-    title: String,
-    /// The time the board was locked
-    time: DateTime<Utc>,
-    /// The time the server was started
-    started_at: DateTime<Utc>,
-    /// The messages at that time
-    messages: Vec<StoredMessage>,
 }
 
 async fn get_board(State(state): State<Arc<ServerStatus>>) -> Result<Json<Board>, StatusCode> {
@@ -169,14 +131,4 @@ pub async fn build(database: &str) -> Result<(Router, JoinHandle<()>), tokio_pos
         .with_state(ServerStatus::new(client).await?);
 
     Ok((router, connection_closed))
-}
-
-#[cfg(feature = "bindgen")]
-pub fn bindgen() {
-    use std::io::stdout;
-
-    use schemars::schema_for;
-    use serde_json::to_writer;
-
-    to_writer(stdout(), &schema_for!((Board, Message))).expect("Cannot write json schema")
 }
